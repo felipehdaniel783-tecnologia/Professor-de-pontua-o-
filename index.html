@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Partida de Tênis – Placar Profissional</title>
+  <style>
+    :root {
+      --court-blue: #0b3c5d;
+      --court-green: #15803d;
+      --tennis-yellow: #ccff00;
+      --scoreboard-bg: #0f172a;
+      --board-header: #1e293b;
+      --accent-orange: #f97316;
+      --light-text: #f8fafc;
+      --muted-text: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #090d16;
+      color: var(--light-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 10px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: var(--tennis-yellow);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
+    }
+
+    p.subtitle {
+      color: var(--muted-text);
+      font-size: 0.95rem;
+      margin-top: 5px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Painel de Configuração Inicial */
+    .setup-panel {
+      background-color: var(--scoreboard-bg);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .input-group label {
+      font-size: 0.85rem;
+      color: var(--muted-text);
+      text-transform: uppercase;
+    }
+
+    .input-group input {
+      background-color: #1e293b;
+      border: 1px solid #475569;
+      color: #fff;
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .input-group input:focus {
+      border-color: var(--tennis-yellow);
+    }
+
+    /* Placar Estilo TV Profissional */
+    .scoreboard-card {
+      background-color: var(--scoreboard-bg);
+      border-radius: 12px;
+      border: 2px solid #334155;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+
+    .scoreboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+
+    .scoreboard-table th {
+      background-color: var(--board-header);
+      color: var(--muted-text);
+      padding: 12px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .scoreboard-table td {
+      padding: 16px 12px;
+      border-bottom: 1px solid #1e293b;
+      font-size: 1.2rem;
+    }
+
+    .player-name-cell {
+      text-align: left;
+      padding-left: 20px !important;
+      font-weight: bold;
+      width: 35%;
+      font-size: 1.3rem !important;
+    }
+
+    .server-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background-color: var(--tennis-yellow);
+      border-radius: 50%;
+      margin-right: 8px;
+      box-shadow: 0 0 8px var(--tennis-yellow);
+    }
+
+    .set-score {
+      font-weight: bold;
+      color: #e2e8f0;
+      width: 12%;
+    }
+
+    .game-score-cell {
+      background-color: #020617;
+      color: var(--tennis-yellow);
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: 1.6rem !important;
+      width: 18%;
+      border-left: 2px solid #334155;
+    }
+
+    /* Mensagens de Alerta / Status */
+    .status-banner {
+      background-color: #1e293b;
+      border-left: 5px solid var(--tennis-yellow);
+      padding: 15px;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #f1f5f9;
+      min-height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Painel de Controles */
+    .controls-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .btn-point {
+      background-color: var(--court-green);
+      color: #fff;
+      border: 2px solid #22c55e;
+      padding: 18px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .btn-point:hover {
+      background-color: #16a34a;
+      transform: translateY(-2px);
+    }
+
+    .btn-point:disabled {
+      background-color: #334155;
+      border-color: #475569;
+      color: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .utility-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-util {
+      background-color: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid #475569;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-util:hover {
+      background-color: #334155;
+      color: #fff;
+    }
+
+    .btn-reset {
+      background-color: #991b1b;
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+
+    .btn-reset:hover {
+      background-color: #dc2626;
+      color: #fff;
+    }
+
+    /* Área "Como Funciona?" */
+    .guide-card {
+      background-color: var(--scoreboard-bg);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 25px;
+      margin-top: 10px;
+    }
+
+    .guide-card h2 {
+      color: var(--tennis-yellow);
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 8px;
+    }
+
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .guide-item h3 {
+      color: var(--accent-orange);
+      font-size: 1rem;
+      margin-bottom: 6px;
+    }
+
+    .guide-item p {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 600px) {
+      .controls-panel {
+        grid-template-columns: 1fr;
+      }
+      .player-name-cell {
+        font-size: 1rem !important;
+        padding-left: 10px !important;
+      }
+      .game-score-cell {
+        font-size: 1.2rem !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎾 Placar & Simulador de Tênis</h1>
+    <p class="subtitle">Aprenda na prática como funciona a pontuação de uma partida profissional</p>
+  </header>
+
+  <div class="container">
+
+    <!-- Nomes dos Jogadores -->
+    <div class="setup-panel">
+      <div class="input-group">
+        <label for="p1-name">Jogador 1</label>
+        <input type="text" id="p1-name" value="Carlos" onchange="updateNames()">
+      </div>
+      <div class="input-group">
+        <label for="p2-name">Jogador 2</label>
+        <input type="text" id="p2-name" value="João" onchange="updateNames()">
+      </div>
+    </div>
+
+    <!-- Placar estilo TV -->
+    <div class="scoreboard-card">
+      <table class="scoreboard-table">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding-left: 20px;">Jogador</th>
+            <th>SET 1</th>
+            <th>SET 2</th>
+            <th>SET 3</th>
+            <th style="background-color: #020617; color: var(--tennis-yellow);">GAME</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="player-name-cell" id="p1-display-name">
+              <span class="server-dot" id="p1-server"></span>
+            </td>
+            <td class="set-score" id="p1-set1">0</td>
+            <td class="set-score" id="p1-set2">0</td>
+            <td class="set-score" id="p1-set3">0</td>
+            <td class="game-score-cell" id="p1-game-points">Love</td>
+          </tr>
+          <tr>
+            <td class="player-name-cell" id="p2-display-name">
+              <span class="server-dot" id="p2-server" style="visibility: hidden;"></span>João
+            </td>
+            <td class="set-score" id="p2-set1">0</td>
+            <td class="set-score" id="p2-set2">0</td>
+            <td class="set-score" id="p2-set3">0</td>
+            <td class="game-score-cell" id="p2-game-points">Love</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Status do Jogo / Avisos -->
+    <div class="status-banner" id="status-message">
+      Partida iniciada! Saque com Carlos. Clique nos botões para simular os pontos.
+    </div>
+
+    <!-- Botões Principais de Ponto -->
+    <div class="controls-panel">
+      <button class="btn-point" id="btn-p1" onclick="addPoint(1)">
+        ➕ Ponto para <span id="btn-p1-name">Carlos</span>
+      </button>
+      <button class="btn-point" id="btn-p2" onclick="addPoint(2)">
+        ➕ Ponto para <span id="btn-p2-name">João</span>
+      </button>
+    </div>
+
+    <!-- Controles de Reset Úteis -->
+    <div class="utility-controls">
+      <button class="btn-util" onclick="resetCurrentGame()">⚡ Novo Game</button>
+      <button class="btn-util" onclick="resetCurrentSet()">🎾 Novo Set</button>
+      <button class="btn-util btn-reset" onclick="resetMatch()">🔄 Nova Partida</button>
+    </div>
+<!-- Guia Explicativa e Quiz Interativo -->
+<div class="guide-card">
+    <h2>📘 Regras Oficiais do Tênis & Quiz</h2>
+
+    <!-- Seção com o detalhamento das regras -->
+    <div style="margin-bottom: 25px;">
+      <h3 style="color: var(--tennis-yellow); margin-bottom: 10px;">Regras Fundamentais</h3>
+      <div class="guide-grid">
+        <div class="guide-item">
+          <h3>Quadra e Saque</h3>
+          <p>O saque deve ser feito atrás da linha de fundo e cruzar em diagonal para o quadrado de saque adversário. O sacador tem 2 tentativas (Primeiro e Segundo serviço). Se tocar na fita da rede e cair dentro, é chamado <em>Let</em> e o saque é repetido.</p>
+        </div>
+        <div class="guide-item">
+          <h3>Bola Fora ou Dentro</h3>
+          <p>Se a bola tocar na linha, ela é considerada <strong>DENTRO</strong>. A bola só pode quicar uma vez no chão de cada lado antes de ser devolvida.</p>
+        </div>
+        <div class="guide-item">
+          <h3>Inversão de Lados</h3>
+          <p>Os jogadores trocam de lado da quadra a cada número ímpar de games somados no set (ex: 1-0, 2-1, 3-2) e ao final de cada set.</p>
+        </div>
+        <div class="guide-item">
+          <h3>Invasão e Toque na Rede</h3>
+          <p>Um jogador perde o ponto se tocar na rede com a raquete ou o corpo enquanto a bola estiver em jogo, ou se bater na bola antes que ela cruze a rede.</p>
+        </div>
+      </div>
+    </div>
+
+    <hr style="border-color: #334155; margin: 25px 0;">
+
+    <!-- Seção do Quiz (Fácil, Médio e Difícil) -->
+    <div>
+      <h3 style="color: var(--tennis-yellow); margin-bottom: 15px;">🧩 Quiz de Regras (Fácil ao Difícil)</h3>
+      
+      <div id="quiz-container" style="background-color: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid #334155;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span id="quiz-difficulty" style="color: var(--accent-orange); font-weight: bold; text-transform: uppercase; font-size: 0.85rem;"></span>
+          <span id="quiz-progress" style="color: var(--muted-text); font-size: 0.85rem;"></span>
+        </div>
+
+        <p id="quiz-question" style="font-weight: bold; font-size: 1.05rem; margin-bottom: 15px; color: #fff;"></p>
+
+        <div id="quiz-options" style="display: flex; flex-direction: column; gap: 10px;"></div>
+
+        <div id="quiz-feedback" style="margin-top: 15px; padding: 10px; border-radius: 6px; font-weight: bold; display: none;"></div>
+
+        <button id="quiz-next-btn" onclick="nextQuestion()" style="display: none; margin-top: 15px; background-color: var(--tennis-yellow); color: #000; font-weight: bold; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+          Próxima Pergunta ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Estado da Partida
+    let match = {
+      p1Name: "Carlos",
+      p2Name: "João",
+      p1Points: 0, // Pontos numéricos dentro do game/tiebreak
+      p2Points: 0,
+      p1Sets: [0, 0, 0], // Games em cada set
+      p2Sets: [0, 0, 0],
+      currentSetIndex: 0, // 0 = Set 1, 1 = Set 2, 2 = Set 3
+      isTiebreak: false,
+      server: 1, // 1 para P1, 2 para P2
+      matchOver: false,
+      setsWonP1: 0,
+      setsWonP2: 0
+    };
+
+    const pointLabels = ["Love", "15", "30", "40"];
+
+    function updateNames() {
+      const p1Input = document.getElementById('p1-name').value.trim();
+      const p2Input = document.getElementById('p2-name').value.trim();
+
+      match.p1Name = p1Input || "Jogador 1";
+      match.p2Name = p2Input || "Jogador 2";
+
+      document.getElementById('btn-p1-name').innerText = match.p1Name;
+      document.getElementById('btn-p2-name').innerText = match.p2Name;
+
+      updateDisplay();
+    }
+
+    function addPoint(player) {
+      if (match.matchOver) return;
+
+      const p1 = player === 1;
+      const ptsWinner = p1 ? match.p1Points + 1 : match.p1Points;
+      const ptsLoser = p1 ? match.p2Points : match.p2Points + 1;
+
+      if (p1) match.p1Points++;
+      else match.p2Points++;
+
+      if (match.isTiebreak) {
+        handleTiebreakScoring();
+      } else {
+        handleRegularGameScoring();
+      }
+
+      updateDisplay();
+    }
+
+    // Regras de Game Normal
+    function handleRegularGameScoring() {
+      const p1 = match.p1Points;
+      const p2 = match.p2Points;
+
+      // Vitória de game por pelo menos 2 pontos após atingir 40 (4 pontos)
+      if (p1 >= 4 && p1 - p2 >= 2) {
+        winGame(1);
+      } else if (p2 >= 4 && p2 - p1 >= 2) {
+        winGame(2);
+      }
+    }
+
+    // Regras de Tie-break
+    function handleTiebreakScoring() {
+      const p1 = match.p1Points;
+      const p2 = match.p2Points;
+
+      // Alterna o saque no tie-break a cada soma ímpar de pontos
+      if ((p1 + p2) % 2 === 1) {
+        match.server = match.server === 1 ? 2 : 1;
+      }
+
+      // Vence o Tie-break quem faz 7 pontos com diferença >= 2
+      if (p1 >= 7 && p1 - p2 >= 2) {
+        winGame(1);
+      } else if (p2 >= 7 && p2 - p1 >= 2) {
+        winGame(2);
+      }
+    }
+
+    function winGame(winner) {
+      const setIdx = match.currentSetIndex;
+
+      if (winner === 1) {
+        match.p1Sets[setIdx]++;
+      } else {
+        match.p2Sets[setIdx]++;
+      }
+
+      // Reset de pontos
+      match.p1Points = 0;
+      match.p2Points = 0;
+
+      // Alternar saque no final do game
+      match.server = match.server === 1 ? 2 : 1;
+
+      // Verificar se o Set foi finalizado
+      checkSetStatus();
+    }
+
+    function checkSetStatus() {
+      const setIdx = match.currentSetIndex;
+      const g1 = match.p1Sets[setIdx];
+      const g2 = match.p2Sets[setIdx];
+
+      // Se era Tie-break, o vencedor do tie-break fecha o set em 7x6
+      if (match.isTiebreak) {
+        match.isTiebreak = false;
+        if (g1 > g2) winSet(1);
+        else winSet(2);
+        return;
+      }
+
+      // Empate em 6x6 abre Tie-break
+      if (g1 === 6 && g2 === 6) {
+        match.isTiebreak = true;
+        setStatus(`Empate em 6 x 6! Começou o <strong>TIE-BREAK</strong> (Primeiro a fazer 7 pontos com 2 de vantagem).`);
+        return;
+      }
+
+      // Vencer com 6 games e vantagem >= 2 (ex: 6x4) ou 7x5
+      if (g1 >= 6 && g1 - g2 >= 2) {
+        winSet(1);
+      } else if (g2 >= 6 && g2 - g1 >= 2) {
+        winSet(2);
+      } else {
+        const winnerName = (match.server === 1) ? match.p1Name : match.p2Name;
+        setStatus(`Game para ${g1 > g2 ? match.p1Name : match.p2Name}! Próximo saque: <strong>${winnerName}</strong>.`);
+      }
+    }
+
+    function winSet(winner) {
+      if (winner === 1) match.setsWonP1++;
+      else match.setsWonP2++;
+
+      if (match.setsWonP1 === 2) {
+        finishMatch(match.p1Name);
+      } else if (match.setsWonP2 === 2) {
+        finishMatch(match.p2Name);
+      } else {
+        match.currentSetIndex++;
+        setStatus(`Set finalizado para <strong>${winner === 1 ? match.p1Name : match.p2Name}</strong>! Iniciando SET ${match.currentSetIndex + 1}.`);
+      }
+    }
+
+    function finishMatch(winnerName) {
+      match.matchOver = true;
+      setStatus(`🏆 <strong>PARTIDA FINALIZADA!</strong> ${winnerName} é o vencedor!`);
+      document.getElementById('btn-p1').disabled = true;
+      document.getElementById('btn-p2').disabled = true;
+    }
+
+    // Tradução dos pontos para texto do placar (Love, 15, 30, 40, Deuce, Ad)
+    function getGameScoreText() {
+      if (match.isTiebreak) {
+        return {
+          p1: match.p1Points.toString(),
+          p2: match.p2Points.toString()
+        };
+      }
+
+      const p1 = match.p1Points;
+      const p2 = match.p2Points;
+
+      if (p1 >= 3 && p2 >= 3) {
+        if (p1 === p2) {
+          return { p1: "40", p2: "40" }; // Deuce no status
+        } else if (p1 - p2 === 1) {
+          return { p1: "Ad", p2: "40" };
+        } else if (p2 - p1 === 1) {
+          return { p1: "40", p2: "Ad" };
+        }
+      }
+
+      return {
+        p1: pointLabels[p1] || "40",
+        p2: pointLabels[p2] || "40"
+      };
+    }
+
+    function updateDisplay() {
+      // Atualizar Nomes na Tabela
+      document.getElementById('p1-display-name').childNodes[1].textContent = " " + match.p1Name;
+      document.getElementById('p2-display-name').childNodes[1].textContent = " " + match.p2Name;
+
+      // Indicador de Saque
+      document.getElementById('p1-server').style.visibility = match.server === 1 ? 'inline-block' : 'hidden';
+      document.getElementById('p2-server').style.visibility = match.server === 2 ? 'inline-block' : 'hidden';
+
+      // Atualizar Sets
+      for (let i = 0; i < 3; i++) {
+        document.getElementById(`p1-set${i+1}`).innerText = match.p1Sets[i];
+        document.getElementById(`p2-set${i+1}`).innerText = match.p2Sets[i];
+      }
+
+      // Atualizar Pontos do Game
+      const scores = getGameScoreText();
+      document.getElementById('p1-game-points').innerText = scores.p1;
+      document.getElementById('p2-game-points').innerText = scores.p2;
+
+      // Atualizar Banner com Contexto se a partida estiver em andamento
+      if (!match.matchOver) {
+        if (!match.isTiebreak && match.p1Points >= 3 && match.p2Points >= 3) {
+          if (match.p1Points === match.p2Points) {
+            setStatus(`<strong>DEUCE (Igualdade em 40-40)!</strong> Necessário 2 pontos seguidos.`);
+          } else if (match.p1Points > match.p2Points) {
+            setStatus(`<strong>ADVANTAGE (Vantagem)</strong> para ${match.p1Name}! Se pontuar, fecha o game.`);
+          } else {
+            setStatus(`<strong>ADVANTAGE (Vantagem)</strong> para ${match.p2Name}! Se pontuar, fecha o game.`);
+          }
+        }
+      }
+    }
+
+    function setStatus(htmlMessage) {
+      document.getElementById('status-message').innerHTML = htmlMessage;
+    }
+
+    // Funções dos Botões de Utilidade
+    function resetCurrentGame() {
+      match.p1Points = 0;
+      match.p2Points = 0;
+      if (!match.matchOver) {
+        setStatus(`Game reiniciado. Saque com ${match.server === 1 ? match.p1Name : match.p2Name}.`);
+      }
+      updateDisplay();
+    }
+
+    function resetCurrentSet() {
+      match.p1Points = 0;
+      match.p2Points = 0;
+      match.p1Sets[match.currentSetIndex] = 0;
+      match.p2Sets[match.currentSetIndex] = 0;
+      match.isTiebreak = false;
+
+      if (match.matchOver) {
+        match.matchOver = false;
+        document.getElementById('btn-p1').disabled = false;
+        document.getElementById('btn-p2').disabled = false;
+      }
+
+      setStatus(`SET ${match.currentSetIndex + 1} foi reiniciado.`);
+      updateDisplay();
+    }
+
+    function resetMatch() {
+      match.p1Points = 0;
+      match.p2Points = 0;
+      match.p1Sets = [0, 0, 0];
+      match.p2Sets = [0, 0, 0];
+      match.currentSetIndex = 0;
+      match.isTiebreak = false;
+      match.server = 1;
+      match.matchOver = false;
+      match.setsWonP1 = 0;
+      match.setsWonP2 = 0;
+
+      document.getElementById('btn-p1').disabled = false;
+      document.getElementById('btn-p2').disabled = false;
+
+      setStatus(`Partida reiniciada! Saque com ${match.p1Name}.`);
+      updateDisplay();
+    }
+
+    // Inicialização
+    updateNames();
+  // ==========================================
+    // SISTEMA DE QUIZ EMBARALHADO (12 PERGUNTAS)
+    // ==========================================
+    const rawQuestions = [
+      // FÁCIL
+      {
+        difficulty: "Fácil",
+        question: "Quantas vezes a bola pode quicar na quadra antes de ser devolvida?",
+        options: ["Nenhuma", "Apenas 1 vez", "Até 2 vezes"],
+        correctText: "Apenas 1 vez",
+        explanation: "No tênis, a bola só pode quicar 1 vez no chão antes do golpe."
+      },
+      {
+        difficulty: "Fácil",
+        question: "Se a bola tocar na linha da quadra, qual é a decisão oficial?",
+        options: ["Fora", "Dentro", "Let (repete)"],
+        correctText: "Dentro",
+        explanation: "As linhas fazem parte do campo válido. Tocou na linha é DENTRO."
+      },
+      {
+        difficulty: "Fácil",
+        question: "Qual termo representa o placar de 0 pontos no tênis?",
+        options: ["Zero", "Nil", "Love"],
+        correctText: "Love",
+        explanation: "O termo internacional 'Love' representa zero pontos no game."
+      },
+      {
+        difficulty: "Fácil",
+        question: "Qual é a sequência numérica padrão dos 3 primeiros pontos em um game?",
+        options: ["10, 20, 30", "15, 30, 40", "1, 2, 3"],
+        correctText: "15, 30, 40",
+        explanation: "A contagem oficial é 15 (1º ponto), 30 (2º ponto) e 40 (3º ponto)."
+      },
+
+      // MÉDIO
+      {
+        difficulty: "Médio",
+        question: "O que acontece em um saque que bate na fita da rede e cai dentro da área correta?",
+        options: ["Falta de saque", "Ponto do recebedor", "Chamado 'Let' e o saque é repetido"],
+        correctText: "Chamado 'Let' e o saque é repetido",
+        explanation: "O serviço é repetido sem penalidade quando a bola toca na fita e cai no quadrado válido."
+      },
+      {
+        difficulty: "Médio",
+        question: "Quantas tentativas de saque o jogador tem a cada ponto?",
+        options: ["Apenas 1", "Até 2 tentativas", "Até 3 tentativas"],
+        correctText: "Até 2 tentativas",
+        explanation: "O sacador possui Primeiro e Segundo Serviço. Se errar ambos, comete dupla falta."
+      },
+      {
+        difficulty: "Médio",
+        question: "Com qual frequência os jogadores trocam de lado da quadra no set?",
+        options: ["A cada 2 games", "A cada soma ímpar de games (ex: 1-0, 2-1)", "Somente ao fim do set"],
+        correctText: "A cada soma ímpar de games (ex: 1-0, 2-1)",
+        explanation: "A troca ocorre a cada soma ímpar de games jogados no set."
+      },
+      {
+        difficulty: "Médio",
+        question: "O que é 'Deuce'?",
+        options: ["Vitória no set", "Empate em 40-40 no game", "Fim do tie-break"],
+        correctText: "Empate em 40-40 no game",
+        explanation: "Deuce ocorre no empate em 40-40, exigindo 2 pontos seguidos de vantagem."
+      },
+
+      // DIFÍCIL
+      {
+        difficulty: "Difícil",
+        question: "No Tie-break, quantos pontos são necessários para vencer o desempate?",
+        options: ["6 pontos", "7 pontos (com 2 de vantagem)", "10 pontos"],
+        correctText: "7 pontos (com 2 de vantagem)",
+        explanation: "O tie-break normal vai até 7 pontos, devendo abrir 2 de margem."
+      },
+      {
+        difficulty: "Difícil",
+        question: "Se o jogador tocar na rede com a raquete durante o ponto ativo, o que acontece?",
+        options: ["Nada, o jogo segue", "Perde o ponto imediatamente", "Recebe uma advertência"],
+        correctText: "Perde o ponto imediatamente",
+        explanation: "Tocar na rede com o corpo ou raquete enquanto a bola está em jogo perde o ponto."
+      },
+      {
+        difficulty: "Difícil",
+        question: "A bola passa por fora dos postes da rede e cai na quadra adversária. A jogada é válida?",
+        options: ["Sim, o ponto é válido", "Não, deve passar por cima da rede", "É repetição de ponto"],
+        correctText: "Sim, o ponto é válido",
+        explanation: "Segundo a ITF, passar a bola por fora dos postes é permitido se cair dentro."
+      },
+      {
+        difficulty: "Difícil",
+        question: "Se a raquete escapar da mão e acertar a bola do outro lado da rede, o ponto conta?",
+        options: ["Sim, se cair dentro", "Não, a raquete deve estar na mão do jogador", "O juiz decide no sorteio"],
+        correctText: "Não, a raquete deve estar na mão do jogador",
+        explanation: "O contato válido exige que a raquete esteja sob o controle da mão do atleta."
+      }
+    ];
+
+    let activeQuestions = [];
+    let currentQuestionIdx = 0;
+    let quizAnswered = false;
+
+    // Algoritmo Fisher-Yates para embaralhar arrays
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function initQuiz() {
+      // Clona e embaralha as perguntas
+      activeQuestions = JSON.parse(JSON.stringify(rawQuestions));
+      shuffleArray(activeQuestions);
+
+      // Embaralha as alternativas de cada pergunta
+      activeQuestions.forEach(q => {
+        shuffleArray(q.options);
+      });
+
+      currentQuestionIdx = 0;
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      quizAnswered = false;
+      const q = activeQuestions[currentQuestionIdx];
+
+      document.getElementById('quiz-difficulty').innerText = `Nível: ${q.difficulty}`;
+      document.getElementById('quiz-progress').innerText = `Pergunta ${currentQuestionIdx + 1} de ${activeQuestions.length}`;
+      document.getElementById('quiz-question').innerText = q.question;
+
+      const optionsDiv = document.getElementById('quiz-options');
+      optionsDiv.innerHTML = '';
+
+      q.options.forEach((optText, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-util';
+        btn.style.textAlign = 'left';
+        btn.style.width = '100%';
+        btn.style.padding = '12px';
+        btn.innerText = `${String.fromCharCode(65 + idx)}) ${optText}`;
+        btn.onclick = () => selectQuizAnswer(optText);
+        optionsDiv.appendChild(btn);
+      });
+
+      document.getElementById('quiz-feedback').style.display = 'none';
+      document.getElementById('quiz-next-btn').style.display = 'none';
+    }
+
+    function selectQuizAnswer(selectedText) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+
+      const q = activeQuestions[currentQuestionIdx];
+      const feedbackEl = document.getElementById('quiz-feedback');
+      const nextBtn = document.getElementById('quiz-next-btn');
+
+      if (selectedText === q.correctText) {
+        feedbackEl.style.backgroundColor = '#166534';
+        feedbackEl.style.color = '#86efac';
+        feedbackEl.innerText = `Correto! ${q.explanation}`;
+      } else {
+        feedbackEl.style.backgroundColor = '#991b1b';
+        feedbackEl.style.color = '#fca5a5';
+        feedbackEl.innerText = `Incorreto. A resposta certa era "${q.correctText}". ${q.explanation}`;
+      }
+
+      feedbackEl.style.display = 'block';
+
+      if (currentQuestionIdx < activeQuestions.length - 1) {
+        nextBtn.innerText = "Próxima Pergunta ➔";
+        nextBtn.style.display = 'inline-block';
+      } else {
+        nextBtn.innerText = "Embaralhar e Recomeçar Quiz 🔄";
+        nextBtn.style.display = 'inline-block';
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIdx < activeQuestions.length - 1) {
+        currentQuestionIdx++;
+        renderQuestion();
+      } else {
+        initQuiz(); // Recomeça e embaralha tudo novamente
+      }
+    }
+
+    // Inicialização do simulador e do quiz
+    updateNames();
+    initQuiz();
+  </script>
